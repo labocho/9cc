@@ -1,0 +1,6 @@
+.bash_history
+.vscode
+*.o
+*~
+9cc
+tmp*
