@@ -14,8 +14,8 @@ enum {
 };
 
 typedef struct {
-  int ty; // token type
-  int val; // value of TK_NUM
+  int ty;      // token type
+  int val;     // value of TK_NUM
   char *input; // token string (for error)
 } Token;
 
@@ -55,7 +55,8 @@ Node *new_node_num(int val) {
 }
 
 int consume(int ty) {
-  if (tokens[pos].ty != ty) return 0;
+  if (tokens[pos].ty != ty)
+    return 0;
   pos++;
   return 1;
 }
@@ -66,11 +67,14 @@ Node *term() {
   for (;;) {
     if (consume('(')) {
       Node *node = expr();
-      if (!consume(')')) error_at(tokens[pos].input, "開きカッコに対応する閉じカッコがありません");
+      if (!consume(')'))
+        error_at(tokens[pos].input,
+                 "開きカッコに対応する閉じカッコがありません");
       return node;
     }
 
-    if (tokens[pos].ty == TK_NUM) return new_node_num(tokens[pos++].val);
+    if (tokens[pos].ty == TK_NUM)
+      return new_node_num(tokens[pos++].val);
 
     error_at(tokens[pos].input, "数値でも開きカッコでもないトークンです");
   }
@@ -121,26 +125,26 @@ void gen(Node *node) {
 
   // 計算して rax に
   switch (node->ty) {
-    case '+':
-      printf("  add rax, rdi\n");
-      break;
-    case '-':
-      printf("  sub rax, rdi\n");
-      break;
-    case '*':
-      // imul は rax * 引数 の上位 64bit を rdx に 下位 64bit を rax にセットする
-      printf("  imul rdi\n");
-      break;
-    case '/':
-      // idiv は (rdx << 64) +  rax / 引数を rax にセット
-      // cqo は rax を 128bit にして rdx と rax にセット
-      printf("  cqo\n");
-      printf("  idiv rdi\n");
-      break;
-    }
+  case '+':
+    printf("  add rax, rdi\n");
+    break;
+  case '-':
+    printf("  sub rax, rdi\n");
+    break;
+  case '*':
+    // imul は rax * 引数 の上位 64bit を rdx に 下位 64bit を rax にセットする
+    printf("  imul rdi\n");
+    break;
+  case '/':
+    // idiv は (rdx << 64) +  rax / 引数を rax にセット
+    // cqo は rax を 128bit にして rdx と rax にセット
+    printf("  cqo\n");
+    printf("  idiv rdi\n");
+    break;
+  }
 
-    // rax を push して終わり
-    printf("  push rax\n");
+  // rax を push して終わり
+  printf("  push rax\n");
 }
 
 void error(char *fmt, ...) {
@@ -163,17 +167,17 @@ void tokenize() {
     }
 
     switch (*p) {
-      case '+':
-      case '-':
-      case '*':
-      case '/':
-      case '(':
-      case ')':
-        tokens[i].ty = *p;
-        tokens[i].input = p;
-        i++;
-        p++;
-        continue;
+    case '+':
+    case '-':
+    case '*':
+    case '/':
+    case '(':
+    case ')':
+      tokens[i].ty = *p;
+      tokens[i].input = p;
+      i++;
+      p++;
+      continue;
     }
 
     if (isdigit(*p)) {
