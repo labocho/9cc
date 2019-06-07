@@ -72,8 +72,7 @@ Node *term() {
     if (consume('(')) {
       Node *node = expr();
       if (!consume(')'))
-        error_at(tokens[pos].input,
-                 "開きカッコに対応する閉じカッコがありません");
+        error_at(tokens[pos].input, "開きカッコに対応する閉じカッコがありません");
       return node;
     }
 
@@ -126,17 +125,13 @@ Node *relational() {
   for (;;) {
     if (consume('<')) {
       node = new_node('<', node, add());
-    } else if (consume(TK_LE))  {
+    } else if (consume(TK_LE)) {
       node = new_node(TK_LE, node, add());
     } else if (consume('>')) {
       node = new_node('>', node, add());
-    }
-    else if (consume(TK_GE))
-    {
+    } else if (consume(TK_GE)) {
       node = new_node(TK_GE, node, add());
-    }
-    else
-    {
+    } else {
       return node;
     }
   }
@@ -145,7 +140,7 @@ Node *relational() {
 Node *equality() {
   Node *node = relational();
 
-  for(;;) {
+  for (;;) {
     if (consume(TK_EQ)) {
       node = new_node(TK_EQ, node, relational());
     } else if (consume(TK_NE)) {
@@ -194,28 +189,28 @@ void gen(Node *node) {
     printf("  idiv rdi\n");
     break;
   case TK_EQ:
-    printf("  cmp rax, rdi\n"); // 比較して結果をフラグレジスタに
-    printf("  sete al\n"); // 直前の比較で == が真なら 1 を偽なら 0 を AL (rax の下位 8bit) にセット
+    printf("  cmp rax, rdi\n");  // 比較して結果をフラグレジスタに
+    printf("  sete al\n");       // 直前の比較で == が真なら 1 を偽なら 0 を AL (rax の下位 8bit) にセット
     printf("  movzb rax, al\n"); // 上位 64-8bit を 0 に
     break;
   case TK_NE:
-    printf("  cmp rax, rdi\n"); // 比較して結果をフラグレジスタに
-    printf("  setne al\n"); // 直前の比較で == が真なら 1 を偽なら 0 を AL (rax の下位 8bit) にセット
+    printf("  cmp rax, rdi\n");  // 比較して結果をフラグレジスタに
+    printf("  setne al\n");      // 直前の比較で == が真なら 1 を偽なら 0 を AL (rax の下位 8bit) にセット
     printf("  movzb rax, al\n"); // 上位 64-8bit を 0 に
     break;
   case '<':
-    printf("  cmp rax, rdi\n"); // 比較して結果をフラグレジスタに
-    printf("  setl al\n"); // 直前の比較で < が真なら 1 を偽なら 0 を AL (rax の下位 8bit) にセット
+    printf("  cmp rax, rdi\n");  // 比較して結果をフラグレジスタに
+    printf("  setl al\n");       // 直前の比較で < が真なら 1 を偽なら 0 を AL (rax の下位 8bit) にセット
     printf("  movzb rax, al\n"); // 上位 64-8bit を 0 に
     break;
   case TK_LE:
     printf("  cmp rax, rdi\n");  // 比較して結果をフラグレジスタに
-    printf("  setle al\n");       // 直前の比較で <= が真なら 1 を偽なら 0 を AL (rax の下位 8bit) にセット
+    printf("  setle al\n");      // 直前の比較で <= が真なら 1 を偽なら 0 を AL (rax の下位 8bit) にセット
     printf("  movzb rax, al\n"); // 上位 64-8bit を 0 に
     break;
   case '>':
-    printf("  cmp rax, rdi\n"); // 比較して結果をフラグレジスタに
-    printf("  setg al\n"); // 直前の比較で > が真なら 1 を偽なら 0 を AL (rax の下位 8bit) にセット
+    printf("  cmp rax, rdi\n");  // 比較して結果をフラグレジスタに
+    printf("  setg al\n");       // 直前の比較で > が真なら 1 を偽なら 0 を AL (rax の下位 8bit) にセット
     printf("  movzb rax, al\n"); // 上位 64-8bit を 0 に
     break;
   case TK_GE:
