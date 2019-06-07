@@ -9,6 +9,8 @@ enum {
   TK_EOF,
   TK_LE, // <=
   TK_GE, // >=
+  TK_EQ, // ==
+  TK_NE, // !=
 };
 
 enum {
@@ -140,8 +142,22 @@ Node *relational() {
   }
 }
 
-Node *expr() {
+Node *equality() {
   Node *node = relational();
+
+  for(;;) {
+    if (consume(TK_EQ)) {
+      node = new_node(TK_EQ, node, relational());
+    } else if (consume(TK_NE)) {
+      node = new_node(TK_NE, node, relational());
+    } else {
+      return node;
+    }
+  }
+}
+
+Node *expr() {
+  Node *node = equality();
 }
 
 void gen(Node *node) {
@@ -176,6 +192,16 @@ void gen(Node *node) {
     // cqo は rax を 128bit にして rdx と rax にセット
     printf("  cqo\n");
     printf("  idiv rdi\n");
+    break;
+  case TK_EQ:
+    printf("  cmp rax, rdi\n"); // 比較して結果をフラグレジスタに
+    printf("  sete al\n"); // 直前の比較で == が真なら 1 を偽なら 0 を AL (rax の下位 8bit) にセット
+    printf("  movzb rax, al\n"); // 上位 64-8bit を 0 に
+    break;
+  case TK_NE:
+    printf("  cmp rax, rdi\n"); // 比較して結果をフラグレジスタに
+    printf("  setne al\n"); // 直前の比較で == が真なら 1 を偽なら 0 を AL (rax の下位 8bit) にセット
+    printf("  movzb rax, al\n"); // 上位 64-8bit を 0 に
     break;
   case '<':
     printf("  cmp rax, rdi\n"); // 比較して結果をフラグレジスタに
@@ -219,6 +245,22 @@ void tokenize() {
     // skip spaces
     if (isspace(*p)) {
       p++;
+      continue;
+    }
+
+    if (strncmp(p, "==", 2) == 0) {
+      tokens[i].ty = TK_EQ;
+      tokens[i].input = p;
+      i++;
+      p += 2;
+      continue;
+    }
+
+    if (strncmp(p, "!=", 2) == 0) {
+      tokens[i].ty = TK_NE;
+      tokens[i].input = p;
+      i++;
+      p += 2;
       continue;
     }
 
