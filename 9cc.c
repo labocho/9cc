@@ -128,9 +128,11 @@ Node *relational() {
     } else if (consume(TK_LE)) {
       node = new_node(TK_LE, node, add());
     } else if (consume('>')) {
-      node = new_node('>', node, add());
+      // a > b -> b < a
+      node = new_node('<', add(), node);
     } else if (consume(TK_GE)) {
-      node = new_node(TK_GE, node, add());
+      // a >= b -> b <= a
+      node = new_node(TK_LE, add(), node);
     } else {
       return node;
     }
@@ -206,16 +208,6 @@ void gen(Node *node) {
   case TK_LE:
     printf("  cmp rax, rdi\n");  // 比較して結果をフラグレジスタに
     printf("  setle al\n");      // 直前の比較で <= が真なら 1 を偽なら 0 を AL (rax の下位 8bit) にセット
-    printf("  movzb rax, al\n"); // 上位 64-8bit を 0 に
-    break;
-  case '>':
-    printf("  cmp rax, rdi\n");  // 比較して結果をフラグレジスタに
-    printf("  setg al\n");       // 直前の比較で > が真なら 1 を偽なら 0 を AL (rax の下位 8bit) にセット
-    printf("  movzb rax, al\n"); // 上位 64-8bit を 0 に
-    break;
-  case TK_GE:
-    printf("  cmp rax, rdi\n");  // 比較して結果をフラグレジスタに
-    printf("  setge al\n");      // 直前の比較で >= が真なら 1 を偽なら 0 を AL (rax の下位 8bit) にセット
     printf("  movzb rax, al\n"); // 上位 64-8bit を 0 に
     break;
   }
