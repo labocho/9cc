@@ -102,7 +102,7 @@ Node *mul() {
   }
 }
 
-Node *expr() {
+Node *add() {
   Node *node = mul();
 
   for (;;) {
@@ -114,6 +114,24 @@ Node *expr() {
       return node;
     }
   }
+}
+
+Node *relational() {
+  Node *node = add();
+
+  for (;;) {
+    if (consume('<')) {
+      node = new_node('<', node, add());
+    } else if (consume('>')) {
+      node = new_node('>', node, add());
+    } else {
+      return node;
+    }
+  }
+}
+
+Node *expr() {
+  Node *node = relational();
 }
 
 void gen(Node *node) {
@@ -149,6 +167,16 @@ void gen(Node *node) {
     printf("  cqo\n");
     printf("  idiv rdi\n");
     break;
+  case '<':
+    printf("  cmp rax, rdi\n"); // 比較して結果をフラグレジスタに
+    printf("  setl al\n"); // 直前の比較で < が真なら 1 を偽なら 0 を AL (rax の下位 8bit) にセット
+    printf("  movzb rax, al\n"); // 上位 64-8bit を 0 に
+    break;
+  case '>':
+    printf("  cmp rax, rdi\n"); // 比較して結果をフラグレジスタに
+    printf("  setg al\n"); // 直前の比較で > が真なら 1 を偽なら 0 を AL (rax の下位 8bit) にセット
+    printf("  movzb rax, al\n"); // 上位 64-8bit を 0 に
+    break;
   }
 
   // rax を push して終わり
@@ -181,6 +209,8 @@ void tokenize() {
     case '/':
     case '(':
     case ')':
+    case '<':
+    case '>':
       tokens[i].ty = *p;
       tokens[i].input = p;
       i++;
