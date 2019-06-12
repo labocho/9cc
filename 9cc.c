@@ -39,7 +39,7 @@ typedef struct {
 char *user_input;
 int pos;
 
-Token tokens[100];
+Vector *tokens;
 
 Vector *new_vector() {
   Vector *vec = malloc(sizeof(Vector));
@@ -80,8 +80,12 @@ Node *new_node_num(int val) {
   return node;
 }
 
+Token *get_token(int index) {
+  return tokens->data[index];
+}
+
 int consume(int ty) {
-  if (tokens[pos].ty != ty)
+  if (get_token(pos)->ty != ty)
     return 0;
   pos++;
   return 1;
@@ -91,17 +95,18 @@ Node *expr();
 
 Node *term() {
   for (;;) {
+
     if (consume('(')) {
       Node *node = expr();
       if (!consume(')'))
-        error_at(tokens[pos].input, "開きカッコに対応する閉じカッコがありません");
+        error_at(get_token(pos)->input, "開きカッコに対応する閉じカッコがありません");
       return node;
     }
 
-    if (tokens[pos].ty == TK_NUM)
-      return new_node_num(tokens[pos++].val);
+    if (get_token(pos)->ty == TK_NUM)
+      return new_node_num(get_token(pos++)->val);
 
-    error_at(tokens[pos].input, "数値でも開きカッコでもないトークンです");
+    error_at(get_token(pos)->input, "数値でも開きカッコでもないトークンです");
   }
 }
 
@@ -249,8 +254,9 @@ void error(char *fmt, ...) {
 void tokenize() {
   char *p = user_input;
 
-  int i = 0;
   while (*p) {
+    Token *token = malloc(sizeof(Token));
+
     // skip spaces
     if (isspace(*p)) {
       p++;
@@ -258,33 +264,33 @@ void tokenize() {
     }
 
     if (strncmp(p, "==", 2) == 0) {
-      tokens[i].ty = TK_EQ;
-      tokens[i].input = p;
-      i++;
+      token->ty = TK_EQ;
+      token->input = p;
+      vec_push(tokens, token);
       p += 2;
       continue;
     }
 
     if (strncmp(p, "!=", 2) == 0) {
-      tokens[i].ty = TK_NE;
-      tokens[i].input = p;
-      i++;
+      token->ty = TK_NE;
+      token->input = p;
+      vec_push(tokens, token);
       p += 2;
       continue;
     }
 
     if (strncmp(p, "<=", 2) == 0) {
-      tokens[i].ty = TK_LE;
-      tokens[i].input = p;
-      i++;
+      token->ty = TK_LE;
+      token->input = p;
+      vec_push(tokens, token);
       p += 2;
       continue;
     }
 
     if (strncmp(p, ">=", 2) == 0) {
-      tokens[i].ty = TK_GE;
-      tokens[i].input = p;
-      i++;
+      token->ty = TK_GE;
+      token->input = p;
+      vec_push(tokens, token);
       p += 2;
       continue;
     }
@@ -298,26 +304,28 @@ void tokenize() {
     case ')':
     case '<':
     case '>':
-      tokens[i].ty = *p;
-      tokens[i].input = p;
-      i++;
+      token->ty = *p;
+      token->input = p;
+      vec_push(tokens, token);
       p++;
       continue;
     }
 
     if (isdigit(*p)) {
-      tokens[i].ty = TK_NUM;
-      tokens[i].input = p;
-      tokens[i].val = strtol(p, &p, 10);
-      i++;
+      token->ty = TK_NUM;
+      token->input = p;
+      token->val = strtol(p, &p, 10);
+      vec_push(tokens, token);
       continue;
     }
 
     error_at(p, "トークナイズできません");
   }
 
-  tokens[i].ty = TK_EOF;
-  tokens[i].input = p;
+  Token *token = malloc(sizeof(Token));
+  token->ty = TK_EOF;
+  token->input = p;
+  vec_push(tokens, token);
 }
 
 void expect(int line, int expected, int actual) {
@@ -353,6 +361,7 @@ int main(int argc, char **argv) {
   }
 
   user_input = argv[1];
+  tokens = new_vector();
   tokenize();
   Node *node = expr();
 
